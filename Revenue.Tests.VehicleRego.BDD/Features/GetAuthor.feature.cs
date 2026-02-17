@@ -18,19 +18,19 @@ namespace Revenue.Tests.BDD.Features
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::NUnit.Framework.TestFixtureAttribute()]
-    [global::NUnit.Framework.DescriptionAttribute("Motor Vehicle Registration")]
+    [global::NUnit.Framework.DescriptionAttribute("Get Author Details")]
     [global::NUnit.Framework.FixtureLifeCycleAttribute(global::NUnit.Framework.LifeCycle.InstancePerTestCase)]
-    public partial class MotorVehicleRegistrationFeature
+    public partial class GetAuthorDetailsFeature
     {
         
         private global::Reqnroll.ITestRunner testRunner;
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "Motor Vehicle Registration", "As a user\r\nI want to navigate to the Motor Vehicle Registration page\r\nSo that I c" +
-                "an see the calculated amount for my vehicle registration", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "Get Author Details", "As a user, I want to retrieve the Author\'s Details so that I can view the Author\'" +
+                "s information.", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
-#line 1 "MotorVehicleRego.feature"
+#line 1 "GetAuthor.feature"
 #line hidden
         
         [global::NUnit.Framework.OneTimeSetUpAttribute()]
@@ -106,31 +106,22 @@ namespace Revenue.Tests.BDD.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/MotorVehicleRego.feature.ndjson", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/GetAuthor.feature.ndjson", 3);
         }
         
         [global::NUnit.Framework.TestAttribute()]
-        [global::NUnit.Framework.DescriptionAttribute("Motor Vehicle Registration Calculation")]
-        [global::NUnit.Framework.CategoryAttribute("UI")]
-        [global::NUnit.Framework.TestCaseAttribute("45000.00", "1350.00", "Yes", "0", null)]
-        public async global::System.Threading.Tasks.Task MotorVehicleRegistrationCalculation(string purchasePrice, string dutyPayable, string isPassengerVehicle, string @__pickleIndex, string[] exampleTags)
+        [global::NUnit.Framework.DescriptionAttribute("Author Details Retrieval")]
+        [global::NUnit.Framework.CategoryAttribute("API")]
+        public async global::System.Threading.Tasks.Task AuthorDetailsRetrieval()
         {
-            string[] @__tags = new string[] {
-                    "UI"};
-            if ((exampleTags != null))
-            {
-                @__tags = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat(@__tags, exampleTags));
-            }
-            string[] tagsOfScenario = @__tags;
+            string[] tagsOfScenario = new string[] {
+                    "API"};
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
-            argumentsOfScenario.Add("purchasePrice", purchasePrice);
-            argumentsOfScenario.Add("dutyPayable", dutyPayable);
-            argumentsOfScenario.Add("isPassengerVehicle", isPassengerVehicle);
-            string pickleIndex = @__pickleIndex;
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Motor Vehicle Registration Calculation", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string pickleIndex = "0";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Author Details Retrieval", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 7
+#line 6
 this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -140,24 +131,18 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
             else
             {
                 await this.ScenarioStartAsync();
+#line 7
+ await testRunner.WhenAsync("I request the author details", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
 #line 8
- await testRunner.GivenAsync("I am in the Check Motor Vehicle Stamp Duty page", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+ await testRunner.ThenAsync("the response status should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 9
- await testRunner.WhenAsync("I check online for the Motor Vehicle Registration", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+ await testRunner.AndAsync("the response JSON should contain \"personal_name\" with value \"Sachi Rautroy\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 10
- await testRunner.AndAsync("I register for a passenger vehicle", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
-#line hidden
-#line 11
- await testRunner.AndAsync(string.Format("I calculate the \'{0}\' for the vehicle", purchasePrice), ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
-#line hidden
-#line 12
- await testRunner.ThenAsync(string.Format("I should see calculated amount for the Motor Vehicle Registration with Duty payab" +
-                            "le as \'{0}\'", dutyPayable), ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 13
- await testRunner.AndAsync("the Vehicle is a Passenger Vehicle", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+ await testRunner.AndAsync("the response JSON array \"alternate_names\" should contain \"Yugashrashta Sachi Rout" +
+                        "ray\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

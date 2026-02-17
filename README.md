@@ -1,5 +1,5 @@
-# Revenue.VehicleRego.Tests
-This repository provides a comprehensive test framework for verifying the end‑to‑end vehicle registration process
+# Revenue.Tests
+This repository provides a comprehensive test framework for verifying the end‑to‑end vehicle registration process (UI) and Author Retrieval from Open Library (API).
 
 
 # Environment setup
@@ -15,6 +15,10 @@ During development to provide environment variables to the solution create a fil
 }
 ```
 **Do NOT include this file in source control**
+1. Restore packages and build:
+`dotnet restore`
+`dotnet build`
+2. Install playwright with using Powershell `.\Scripts\install-playwright.ps1`
 
 # Build and Test
 
@@ -26,17 +30,9 @@ And to test:
 
 `dotnet test`
 
-# "Specflow" Plugin for VsCode
+# Run individual Reqnroll Tests
 
-At time of writing there is no official plugin for specflow with VsCode.
-
-However, you can use the Cucumber plugin and modify it for our Specflow needs, the guide is here:
-
-https://docs.specflow.org/projects/specflow/en/latest/vscode/vscode-specflow.html
-
-# Run individual SpecFlow Tests
-
-Run individual specflow tests from the associated .feature.cs file
+Run individual Reqnroll tests from the associated .feature.cs file
 
 # Api
 
