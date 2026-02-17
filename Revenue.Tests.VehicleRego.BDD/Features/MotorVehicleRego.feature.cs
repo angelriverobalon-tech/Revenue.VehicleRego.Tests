@@ -27,7 +27,7 @@ namespace Revenue.Tests.BDD.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "Motor Vehicle Registration", "As a user\r\nI want to navigate to the Motor Vehicle Registration page\r\nSo that I c" +
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "Motor Vehicle Registration", "As a user\r\nI want to navigate to the Motor Vehicle Registration page\r\nSo that I c" +
                 "an see the calculated amount for my vehicle registration", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "MotorVehicleRego.feature"

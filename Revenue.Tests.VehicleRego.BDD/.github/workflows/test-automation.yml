@@ -1,0 +1,71 @@
+name: Test Automation CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+  schedule:
+    # Run tests every day at 9 AM UTC
+    - cron: '0 9 * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build project
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Install Playwright
+      run: pwsh Scripts/install-playwright.ps1
+      
+    - name: Install Playwright browsers
+      run: pwsh -c "dotnet tool install --global Microsoft.Playwright.CLI; playwright install --with-deps"
+    
+    - name: Run Tests
+      run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --logger "html;LogFileName=test-results.html" --verbosity normal
+      continue-on-error: true
+    
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: '**/TestResults/*.trx'
+        check_name: 'Test Results'
+        comment_title: 'Test Results'
+        
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          **/TestResults/
+          **/*.trx
+          **/*.html
+        retention-days: 30
+        
+    - name: Upload Playwright Screenshots/Videos
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-artifacts
+        path: |
+          **/screenshots/
+          **/videos/
+          **/traces/
+        retention-days: 30
+        if-no-files-found: ignore

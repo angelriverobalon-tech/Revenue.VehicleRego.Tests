@@ -27,7 +27,7 @@ namespace Revenue.Tests.BDD.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "Get Author Details", "As a user, I want to retrieve the Author\'s Details so that I can view the Author\'" +
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "Get Author Details", "As a user, I want to retrieve the Author\'s Details so that I can view the Author\'" +
                 "s information.", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "GetAuthor.feature"

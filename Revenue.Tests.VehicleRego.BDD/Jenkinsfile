@@ -1,0 +1,99 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOTNET_CLI_HOME = "${WORKSPACE}/.dotnet"
+        DOTNET_ROOT = "${WORKSPACE}/.dotnet"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Setup .NET') {
+            steps {
+                sh '''
+                    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0
+                    export PATH="$DOTNET_ROOT:$PATH"
+                    dotnet --version
+                '''
+            }
+        }
+        
+        stage('Restore Dependencies') {
+            steps {
+                sh '''
+                    export PATH="$DOTNET_ROOT:$PATH"
+                    dotnet restore
+                '''
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh '''
+                    export PATH="$DOTNET_ROOT:$PATH"
+                    dotnet build --no-restore --configuration Release
+                '''
+            }
+        }
+        
+        stage('Install Playwright') {
+            steps {
+                sh '''
+                    export PATH="$DOTNET_ROOT:$PATH"
+                    pwsh Scripts/install-playwright.ps1
+                    dotnet tool install --global Microsoft.Playwright.CLI
+                    export PATH="$HOME/.dotnet/tools:$PATH"
+                    playwright install --with-deps
+                '''
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    export PATH="$DOTNET_ROOT:$PATH"
+                    dotnet test --no-build --configuration Release \
+                        --logger "trx;LogFileName=test-results.trx" \
+                        --logger "html;LogFileName=test-results.html" \
+                        --verbosity normal
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Publish NUnit test results
+            nunit testResultsPattern: '**/TestResults/*.trx'
+            
+            // Archive test artifacts
+            archiveArtifacts artifacts: '**/TestResults/**/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/screenshots/**/*', allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/videos/**/*', allowEmptyArchive: true
+            
+            // Publish HTML reports
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'TestResults',
+                reportFiles: 'test-results.html',
+                reportName: 'Test Report',
+                reportTitles: 'Automated Test Results'
+            ])
+        }
+        
+        success {
+            echo 'All tests passed successfully!'
+        }
+        
+        failure {
+            echo 'Tests failed. Check the reports for details.'
+        }
+    }
+}
