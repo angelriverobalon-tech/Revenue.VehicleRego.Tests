@@ -186,8 +186,11 @@ jobs:
                   STATUS="⏭️"
                 fi
                 
-                CLEAN_NAME=$(echo "$TESTNAME" | sed 's/.*\.//' | sed 's/(.*//')
-                echo "| $STATUS | \`$CLEAN_NAME\` | $DURATION |" >> $GITHUB_STEP_SUMMARY
+                # Clean test name: remove namespace and decode HTML entities
+                CLEAN_NAME=$(echo "$TESTNAME" | sed 's/.*\.//')
+                CLEAN_NAME=$(echo "$CLEAN_NAME" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' | sed 's/&lt;/</g' | sed 's/&gt;/>/g')
+                
+                echo "| $STATUS | $CLEAN_NAME | $DURATION |" >> $GITHUB_STEP_SUMMARY
               fi
             done < "$trx"
           done
