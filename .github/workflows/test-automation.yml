@@ -47,12 +47,17 @@ jobs:
     
     - name: Create env.json for CI
       run: |
+        # Create env.json in project root
         echo '{
           "PLAYWRIGHT_URL": "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty",
           "PLAYWRIGHT_HEADLESS": "true",
           "PLAYWRIGHT_BROWSER": "chromium",
           "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
         }' > env.json
+        
+        # Also create in the expected location for tests
+        mkdir -p bin/Release/net8.0
+        cp env.json bin/Release/net8.0/
     
     - name: Verify URL is accessible
       run: |
@@ -70,6 +75,15 @@ jobs:
       
     - name: Build project
       run: dotnet build --no-restore --configuration Release
+    
+    - name: Copy env.json to build output
+      run: |
+        # Ensure env.json is in the build output directory
+        cp env.json bin/Release/net8.0/ || true
+        echo "=== env.json location ==="
+        find . -name "env.json" -type f
+        echo "=== env.json content ==="
+        cat bin/Release/net8.0/env.json || echo "File not found"
     
     - name: Install Playwright CLI
       run: dotnet tool install --global Microsoft.Playwright.CLI
