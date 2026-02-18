@@ -3,7 +3,7 @@ As a user
 I want to navigate to the Motor Vehicle Registration page
 So that I can see the calculated amount for my vehicle registration
 
-@UI
+@GUI
 Scenario Outline: Motor Vehicle Registration Calculation
 	Given I am in the Check Motor Vehicle Stamp Duty page
 	When I check online for the Motor Vehicle Registration

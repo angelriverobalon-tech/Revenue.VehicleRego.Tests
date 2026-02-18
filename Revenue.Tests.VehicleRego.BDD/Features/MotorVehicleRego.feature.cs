@@ -111,12 +111,12 @@ namespace Revenue.Tests.BDD.Features
         
         [global::NUnit.Framework.TestAttribute()]
         [global::NUnit.Framework.DescriptionAttribute("Motor Vehicle Registration Calculation")]
-        [global::NUnit.Framework.CategoryAttribute("UI")]
+        [global::NUnit.Framework.CategoryAttribute("GUI")]
         [global::NUnit.Framework.TestCaseAttribute("45000.00", "1350.00", "Yes", "0", null)]
         public async global::System.Threading.Tasks.Task MotorVehicleRegistrationCalculation(string purchasePrice, string dutyPayable, string isPassengerVehicle, string @__pickleIndex, string[] exampleTags)
         {
             string[] @__tags = new string[] {
-                    "UI"};
+                    "GUI"};
             if ((exampleTags != null))
             {
                 @__tags = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat(@__tags, exampleTags));

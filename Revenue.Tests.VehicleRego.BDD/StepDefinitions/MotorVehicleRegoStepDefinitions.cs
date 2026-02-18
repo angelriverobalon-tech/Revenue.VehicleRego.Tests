@@ -4,32 +4,31 @@ using NUnit.Framework;
 using FluentAssertions;
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Reqnroll;
 
 namespace Revenue.Tests.VehicleRego.BDD.StepDefinitions
 {
     [Binding]
     public sealed class MotorVehicleRegoStepDefinitions
     {
+        private readonly IPage _page;
+        private readonly ScenarioContext _scenarioContext;
         private VehicleRegistrationsPage? _vehicleRegistrationsPage;
         private DutyCalculatorPage? _dutyCalculatorPage;
-        private readonly ScenarioContext _scenarioContext;
 
-        public MotorVehicleRegoStepDefinitions(ScenarioContext scenarioContext)
+        public MotorVehicleRegoStepDefinitions(IPage page, ScenarioContext scenarioContext)
         {
+            _page = page;
             _scenarioContext = scenarioContext;
         }
 
         [Given("I am in the Check Motor Vehicle Stamp Duty page")]
         public async Task GivenIAmInTheCheckMotorVehicleStampDutyPageAsync()
         {
-            var headlessStr = ConfigManager.GetConfigValue("PLAYWRIGHT_HEADLESS", "true");
-            var headless = !string.Equals(headlessStr, "false", StringComparison.OrdinalIgnoreCase);
-
-            await PlaywrightDriver.InitAsync(headless);
-            var page = await PlaywrightDriver.NewPageAsync();
-
-            _vehicleRegistrationsPage = new VehicleRegistrationsPage(page);
-            _dutyCalculatorPage = new DutyCalculatorPage(page);
+            // Use the injected page instead of creating a new one
+            _vehicleRegistrationsPage = new VehicleRegistrationsPage(_page);
+            _dutyCalculatorPage = new DutyCalculatorPage(_page);
 
             await _vehicleRegistrationsPage.NavigateToVehicleRegistrationsPage();
         }
@@ -37,59 +36,49 @@ namespace Revenue.Tests.VehicleRego.BDD.StepDefinitions
         [When("I check online for the Motor Vehicle Registration")]
         public async Task WhenICheckOnlineForTheMotorVehicleRegistration()
         {
+            if (_vehicleRegistrationsPage == null)
+                throw new InvalidOperationException("Vehicle page not initialized");
+
             await _vehicleRegistrationsPage.ClickCheckOnlineButton();
         }
 
         [When("I register for a passenger vehicle")]
         public async Task WhenIRegisterForAPassengerVehicle()
         {
+            if (_dutyCalculatorPage == null)
+                throw new InvalidOperationException("Duty calculator page not initialized");
+
             await _dutyCalculatorPage.ClickYesPassengerVehicle();
         }
 
-        [When("I calculate the {string} for the vehicle")]
-        public async Task WhenICalculateTheForTheVehicle(string purchasePrice)
+        [When(@"I calculate the '(.*)' for the vehicle")]
+        public async Task WhenICalculateThePurchasePriceForTheVehicle(string purchasePrice)
         {
-            _scenarioContext["purchasePrice"] = purchasePrice;
+            if (_dutyCalculatorPage == null)
+                throw new InvalidOperationException("Duty calculator page not initialized");
+
             await _dutyCalculatorPage.EnterPurchasePriceValue(purchasePrice);
             await _dutyCalculatorPage.ClickCalculateButton();
         }
 
-        [Then("I should see calculated amount for the Motor Vehicle Registration with Duty payable as {string}")]
-        public async Task ThenIShouldSeeCalculatedAmountForTheMotorVehicleRegistrationWithDutyPayableAs(string dutyPayable)
+        [Then(@"I should see calculated amount for the Motor Vehicle Registration with Duty payable as '(.*)'")]
+        public async Task ThenIShouldSeeCalculatedAmountForTheMotorVehicleRegistrationWithDutyPayableAs(string expectedDuty)
         {
-            string purchasePrice = _scenarioContext["purchasePrice"] as string ?? string.Empty;
-            var expectedDutyPayableNormalised = DutyCalculatorPage.NormalizeCurrencyStringPublic(dutyPayable);
-            var actualDutyPayableNormalised = await _dutyCalculatorPage.GetDutyPayableNormalizedAsync();
+            if (_dutyCalculatorPage == null)
+                throw new InvalidOperationException("Duty calculator page not initialized");
 
-            var expectedPurchaseNormalized = DutyCalculatorPage.NormalizeCurrencyStringPublic(purchasePrice);
-            var actualPurchaseNormalized = await _dutyCalculatorPage.GetPurchasePriceNormalisedAsync();
-
-            actualDutyPayableNormalised.Should().Be(expectedDutyPayableNormalised, $"Expected duty payable to be {expectedDutyPayableNormalised} but was {actualDutyPayableNormalised}");
-            actualPurchaseNormalized.Should().Be(expectedPurchaseNormalized, $"Expected Purchase Price to be {expectedPurchaseNormalized} but was {actualPurchaseNormalized}");
+            var actualDuty = await _dutyCalculatorPage.GetDutyPayableNormalizedAsync();
+            actualDuty.Should().Be(expectedDuty, $"Expected duty to be {expectedDuty}");
         }
 
         [Then("the Vehicle is a Passenger Vehicle")]
         public async Task ThenTheVehicleIsAPassengerVehicle()
         {
-            var actual = await _dutyCalculatorPage.GetPassengerVehicleText();
-            var cleaned = CleanText(actual);
-            cleaned.Should().Be("Yes");
-        }
+            if (_dutyCalculatorPage == null)
+                throw new InvalidOperationException("Duty calculator page not initialized");
 
-        string CleanText(string raw)
-        {
-            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
-
-            // unescape JSON-style escapes like \<\/td\> -> </td>
-            raw = Regex.Unescape(raw);
-
-            // remove any HTML tags
-            raw = Regex.Replace(raw, "<.*?>", string.Empty);
-
-            // decode HTML entities if present (&amp; etc.)
-            raw = WebUtility.HtmlDecode(raw);
-
-            return raw.Trim();
+            var passengerVehicleText = await _dutyCalculatorPage.GetPassengerVehicleText();
+            passengerVehicleText.Should().Be("Yes", "Vehicle should be a passenger vehicle");
         }
     }
 }

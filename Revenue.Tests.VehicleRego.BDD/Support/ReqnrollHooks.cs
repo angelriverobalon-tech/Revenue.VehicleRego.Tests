@@ -1,97 +1,70 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
-using NUnit.Framework;
-using System.Reflection;
-using Revenue.Tests.VehicleRego.BDD.Model.Pages;
+using Reqnroll;
+using Reqnroll.BoDi;
 
 namespace Revenue.Tests.VehicleRego.BDD.Support
 {
-    [SetUpFixture]
+    [Binding]
     public class ReqnrollHooks
     {
-        [OneTimeSetUp]
-        public async Task OneTimeSetUpAsync()
+        private readonly IObjectContainer _objectContainer;
+        private readonly ScenarioContext _scenarioContext;
+        private IPage? _page;
+
+        public ReqnrollHooks(IObjectContainer objectContainer, ScenarioContext scenarioContext)
         {
-            var headlessStr = ConfigManager.GetConfigValue("PLAYWRIGHT_HEADLESS", "true");
-            var headless = !string.Equals(headlessStr, "false", StringComparison.OrdinalIgnoreCase);
+            _objectContainer = objectContainer;
+            _scenarioContext = scenarioContext;
+        }
 
-            await PlaywrightDriver.InitAsync(headless);
-            var page = await PlaywrightDriver.NewPageAsync();
+        [BeforeScenario(Order = 0)]
+        public async Task BeforeScenario()
+        {
+            // Check if this is a GUI test
+            var isGuiTest = _scenarioContext.ScenarioInfo.Tags.Contains("GUI") ||
+                           _scenarioContext.ScenarioInfo.Tags.Contains("UI") ||
+                           _scenarioContext.ScenarioInfo.Tags.Contains("Playwright");
 
-            try
+            // Only initialize Playwright for GUI tests
+            if (isGuiTest)
             {
-                // Try to locate the Reqnroll/BoDi ObjectContainer via reflection and register instances
-                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                Type? containerType = null;
-                object? containerInstance = null;
+                var headlessStr = ConfigManager.GetConfigValue("PLAYWRIGHT_HEADLESS", "true");
+                var headless = !string.Equals(headlessStr, "false", StringComparison.OrdinalIgnoreCase);
 
-                foreach (var asm in assemblies)
-                {
-                    Type[] types;
-                    try { types = asm.GetTypes(); } catch { continue; }
-                    foreach (var t in types)
-                    {
-                        if (t.Name == "ObjectContainer" || t.Name == "ObjectContainer`1")
-                        {
-                            containerType = t;
-                            break;
-                        }
-                    }
-                    if (containerType != null) break;
-                }
+                await PlaywrightDriver.InitAsync(headless);
 
-                if (containerType != null)
-                {
-                    // try common static accessors
-                    var prop = containerType.GetProperty("Current", BindingFlags.Public | BindingFlags.Static)
-                               ?? containerType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
-                    if (prop != null)
-                    {
-                        containerInstance = prop.GetValue(null);
-                    }
-                    else
-                    {
-                        var field = containerType.GetField("Current", BindingFlags.Public | BindingFlags.Static)
-                                    ?? containerType.GetField("Instance", BindingFlags.Public | BindingFlags.Static);
-                        if (field != null)
-                            containerInstance = field.GetValue(null);
-                    }
+                // Create a new page for this scenario
+                _page = await PlaywrightDriver.NewPageAsync();
 
-                    if (containerInstance != null)
-                    {
-                        // find RegisterInstanceAs generic method
-                        var regMethod = containerInstance.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                            .FirstOrDefault(m => m.Name == "RegisterInstanceAs" && m.IsGenericMethod && m.GetParameters().Length == 1);
+                // Register the page instance in the DI container
+                _objectContainer.RegisterInstanceAs<IPage>(_page);
 
-                        if (regMethod != null)
-                        {
-                            var regIPage = regMethod.MakeGenericMethod(new Type[] { typeof(IPage) });
-                            regIPage.Invoke(containerInstance, new object[] { page });
-
-                            var vehiclePage = new VehicleRegistrationsPage(page);
-                            var regVehicle = regMethod.MakeGenericMethod(new Type[] { typeof(VehicleRegistrationsPage) });
-                            regVehicle.Invoke(containerInstance, new object[] { vehiclePage });
-                        }
-                    }
-                }
+                Console.WriteLine("🌐 Playwright page initialized for GUI test");
             }
-            catch
+            else
             {
-                // If registration fails, swallow the error so tests can still run with manual setup
+                Console.WriteLine("📡 API test - Playwright not initialized");
             }
         }
 
-        [OneTimeTearDown]
-        public async Task OneTimeTearDownAsync()
+        [AfterScenario(Order = 10000)]
+        public async Task AfterScenario()
         {
-            try
+            // Close the page after GUI scenario
+            if (_page != null)
             {
-                await PlaywrightDriver.DisposeAsync();
-            }
-            catch
-            {
-                // ignore
+                try
+                {
+                    await _page.CloseAsync();
+                    Console.WriteLine("🌐 Playwright page closed");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Error closing page: {ex.Message}");
+                }
             }
         }
     }
