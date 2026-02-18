@@ -8,6 +8,12 @@ namespace Revenue.Tests.VehicleRego.BDD.Support
     {
         public static string GetConfigValue(string key, string? defaultValue = null)
         {
+            // 1. First, try to get from environment variables
+            var envValue = Environment.GetEnvironmentVariable(key);
+            if (!string.IsNullOrWhiteSpace(envValue))
+                return envValue;
+
+            // 2. Fall back to env.json file
             var envPath = FindEnvPath();
 
             try
@@ -29,6 +35,7 @@ namespace Revenue.Tests.VehicleRego.BDD.Support
                 // Ignore and fall back to default
             }
 
+            // 3. Return default value
             return defaultValue ?? string.Empty;
         }
 
