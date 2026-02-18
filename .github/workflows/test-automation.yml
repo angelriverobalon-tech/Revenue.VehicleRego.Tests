@@ -39,6 +39,31 @@ jobs:
           "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
         }' > env.json
     
+    - name: Verify URL is accessible
+      run: |
+        echo "Testing URL accessibility..."
+        RESPONSE=$(curl -sL -w "%{http_code}" "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty" -o /dev/null)
+        echo "HTTP Response Code: $RESPONSE"
+        if [ "$RESPONSE" -eq "200" ] || [ "$RESPONSE" -eq "301" ] || [ "$RESPONSE" -eq "302" ]; then
+          echo "✅ URL is accessible (HTTP $RESPONSE)"
+        else
+          echo "⚠️ Warning: URL returned HTTP $RESPONSE"
+        fi
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ runner.os }}-nuget-
+    
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-chromium-1.58.0
+        restore-keys: playwright-chromium-
+    
     - name: Restore dependencies
       run: dotnet restore
       
@@ -48,11 +73,24 @@ jobs:
     - name: Install Playwright browsers
       run: |
         dotnet tool install --global Microsoft.Playwright.CLI
-        playwright install --with-deps chromium
+        playwright install chromium
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
     
-    - name: Run Tests
-      run: dotnet test --no-build --configuration Release --logger trx --verbosity normal
+    - name: Run Tests (Parallel)
+      run: |
+        dotnet test \
+          --no-build \
+          --configuration Release \
+          --logger trx \
+          --logger "console;verbosity=minimal" \
+          --settings .runsettings
       continue-on-error: true
+      timeout-minutes: 5
+      env:
+        # Set longer timeouts for CI environment
+        PWDEBUG: 0
+        PLAYWRIGHT_TIMEOUT: 90000
     
     - name: List files for debugging
       if: always()
@@ -65,6 +103,9 @@ jobs:
         echo ""
         echo "=== Looking for screenshots ==="
         find . -name "*.png" -type f || echo "No PNG files found"
+        echo ""
+        echo "=== Looking for debug screenshots ==="
+        find . -name "debug_*.png" -type f || echo "No debug screenshots found"
         echo ""
         echo "=== Looking for test results ==="
         find . -name "*.trx" -type f || echo "No TRX files found"
@@ -81,6 +122,16 @@ jobs:
         retention-days: 30
         if-no-files-found: warn
     
+    - name: Upload Debug Screenshots
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: debug-screenshots
+        path: |
+          **/debug_*.png
+        retention-days: 7
+        if-no-files-found: ignore
+
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
       if: always()

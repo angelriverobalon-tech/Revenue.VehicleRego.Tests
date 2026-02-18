@@ -26,19 +26,53 @@ namespace Revenue.Tests.VehicleRego.BDD.Model.Pages
 
         #region methods
 
-        public async Task<VehicleRegistrationsPage> NavigateToVehicleRegistrationsPage()
+        public async Task NavigateToVehicleRegistrationsPage()
         {
-            var defaultUrl = "https://www.revenue.nsw.gov.au/vehicle-registrations";
+            if (page == null)
+                throw new InvalidOperationException("Page is not initialized");
 
-            var url = ConfigManager.GetConfigValue("PLAYWRIGHT_URL", defaultUrl);
+            var url = ConfigManager.GetConfigValue("PLAYWRIGHT_URL");
 
-            await page.GotoAsync(url);
-            return this;
+            // Use DOMContentLoaded - much faster than NetworkIdle
+            await page.GotoAsync(url, new PageGotoOptions
+            {
+                Timeout = 20000,
+                WaitUntil = WaitUntilState.DOMContentLoaded  // FAST - don't wait for all network
+            });
+
+            // Quick cookie dismiss (1 second max)
+            await QuickDismissCookies();
         }
+
+        private async Task QuickDismissCookies()
+        {
+            if (page == null) return;
+
+            try
+            {
+                var acceptButton = page.Locator("button:has-text('Accept')");
+                await acceptButton.ClickAsync(new() { Timeout = 1000 });
+            }
+            catch
+            {
+                // No cookie banner or timed out - continue
+            }
+        }
+
         public async Task<VehicleRegistrationsPage> ClickCheckOnlineButton()
         {
-            if (page == null) throw new InvalidOperationException("Page is not initialized");
-            await page.Locator(checkOnlineButton).ClickAsync();
+            if (page == null)
+                throw new InvalidOperationException("Page is not initialized");
+
+            // Simple, fast click
+            await page.Locator("//a[normalize-space()='Check online']").ClickAsync(new()
+            {
+                Timeout = 10000  // 10 seconds max
+            });
+
+            // Wait for next page to start loading (not fully loaded)
+            await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new() { Timeout = 10000 });
+
             return this;
         }
 

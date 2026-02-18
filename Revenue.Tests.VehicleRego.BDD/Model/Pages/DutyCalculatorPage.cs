@@ -121,20 +121,28 @@ namespace Revenue.Tests.VehicleRego.BDD.Model.Pages
         public async Task<DutyCalculatorPage> ClickYesPassengerVehicle()
         {
             if (page == null) throw new InvalidOperationException("Page is not initialized");
-            await page.Locator(yesPassengerVehicleRadioButton).ClickAsync();
+            await page.Locator(yesPassengerVehicleRadioButton).ClickAsync(new() { Timeout = 5000 });
             return this;
         }
         public async Task<DutyCalculatorPage> EnterPurchasePriceValue(string purchasePrice)
         {
             if (page == null) throw new InvalidOperationException("Page is not initialized");
-            await page.Locator(purchasePriceInput).FillAsync(purchasePrice);
+            await page.Locator(purchasePriceInput).FillAsync(purchasePrice, new() { Timeout = 5000 });
             return this;
         }
 
         public async Task<DutyCalculatorPage> ClickCalculateButton()
         {
             if (page == null) throw new InvalidOperationException("Page is not initialized");
-            await page.Locator(calculateButton).ClickAsync();
+            await page.Locator(calculateButton).ClickAsync(new() { Timeout = 5000 });
+
+            // Wait for calculation result - use specific element, not page load
+            await page.Locator(dutyPayableText).WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 10000
+            });
+
             return this;
         }
 
