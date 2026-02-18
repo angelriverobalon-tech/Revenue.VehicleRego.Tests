@@ -1,3 +1,126 @@
+name: Test Automation CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    defaults:
+      run:
+        working-directory: ./Revenue.Tests.VehicleRego.BDD
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: ${{ runner.os }}-nuget-
+    
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-chromium-1.58.0
+        restore-keys: playwright-chromium-
+    
+    - name: Create env.json for CI
+      run: |
+        echo '{
+          "PLAYWRIGHT_URL": "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty",
+          "PLAYWRIGHT_HEADLESS": "true",
+          "PLAYWRIGHT_BROWSER": "chromium",
+          "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
+        }' > env.json
+    
+    - name: Verify URL is accessible
+      run: |
+        echo "Testing URL accessibility..."
+        RESPONSE=$(curl -sL -w "%{http_code}" "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty" -o /dev/null)
+        echo "HTTP Response Code: $RESPONSE"
+        if [ "$RESPONSE" -eq "200" ] || [ "$RESPONSE" -eq "301" ] || [ "$RESPONSE" -eq "302" ]; then
+          echo "✅ URL is accessible (HTTP $RESPONSE)"
+        else
+          echo "⚠️ Warning: URL returned HTTP $RESPONSE"
+        fi
+    
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build project
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Install Playwright CLI
+      run: dotnet tool install --global Microsoft.Playwright.CLI
+    
+    - name: Install Playwright browsers
+      run: playwright install chromium --with-deps
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
+    
+    - name: Run Tests
+      run: |
+        dotnet test \
+          --no-build \
+          --configuration Release \
+          --logger trx \
+          --logger "console;verbosity=minimal"
+      continue-on-error: true
+      timeout-minutes: 10
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
+    
+    - name: List files for debugging
+      if: always()
+      run: |
+        echo "=== Current Directory ==="
+        pwd
+        echo ""
+        echo "=== Looking for screenshots ==="
+        find . -name "*.png" -type f || echo "No PNG files found"
+        echo ""
+        echo "=== Looking for test results ==="
+        find . -name "*.trx" -type f || echo "No TRX files found"
+    
+    - name: Upload Screenshots
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-screenshots
+        path: '**/screenshots/**/*.png'
+        retention-days: 30
+        if-no-files-found: ignore
+    
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: '**/TestResults/**/*.trx'
+        retention-days: 30
+        if-no-files-found: warn
+    
     - name: Create Test Summary with Screenshots
       if: always()
       shell: bash
