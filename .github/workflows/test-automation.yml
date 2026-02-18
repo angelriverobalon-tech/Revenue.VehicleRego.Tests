@@ -13,7 +13,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
-    # Set working directory to project folder
     defaults:
       run:
         working-directory: ./Revenue.Tests.VehicleRego.BDD
@@ -45,17 +44,48 @@ jobs:
     - name: Install Playwright browsers
       run: |
         dotnet tool install --global Microsoft.Playwright.CLI
-        playwright install --with-deps
+        playwright install --with-deps chromium
     
     - name: Run Tests
-      run: dotnet test --no-build --configuration Release --logger "trx" --results-directory ./TestResults --verbosity normal
+      run: |
+        dotnet test --no-build --configuration Release \
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory ./TestResults \
+          --verbosity normal
       continue-on-error: true
     
-    - name: Upload Test Results
+    - name: Upload Test Results (TRX)
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results
-        path: Revenue.Tests.VehicleRego.BDD/TestResults/**/*
+        path: Revenue.Tests.VehicleRego.BDD/TestResults/**/*.trx
         retention-days: 30
         if-no-files-found: warn
+    
+    - name: Upload Screenshots
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-screenshots
+        path: Revenue.Tests.VehicleRego.BDD/screenshots/**/*.png
+        retention-days: 30
+        if-no-files-found: ignore
+    
+    - name: Upload All Test Attachments
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-attachments
+        path: Revenue.Tests.VehicleRego.BDD/TestResults/**/*
+        retention-days: 30
+        if-no-files-found: ignore
+    
+    - name: Publish Test Summary
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: Revenue.Tests.VehicleRego.BDD/TestResults/**/*.trx
+        reporter: dotnet-trx
+        fail-on-error: false
