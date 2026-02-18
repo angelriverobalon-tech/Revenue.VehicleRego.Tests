@@ -51,19 +51,7 @@ jobs:
     - name: Build project
       run: dotnet build --no-restore --configuration Release
     
-    - name: Create env.json in test output directory
-      run: |
-        cat > bin/Release/net8.0/env.json << 'EOF'
-        {
-          "PLAYWRIGHT_URL": "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty",
-          "PLAYWRIGHT_HEADLESS": "true",
-          "PLAYWRIGHT_BROWSER": "chromium",
-          "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
-        }
-        EOF
-        
-        echo "✅ env.json created"
-        cat bin/Release/net8.0/env.json
+    # Remove or comment out the "Create env.json" step
     
     - name: Verify URL is accessible
       run: |
@@ -84,6 +72,11 @@ jobs:
         ls -la ~/.cache/ms-playwright/ || echo "No cache directory"
     
     - name: Run Tests
+      env:
+        PLAYWRIGHT_URL: "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty"
+        PLAYWRIGHT_HEADLESS: "true"
+        PLAYWRIGHT_BROWSER: "chromium"
+        API_BASE_URL: "https://openlibrary.org/authors/OL1A.json"
       run: |
         dotnet test \
           --no-build \
