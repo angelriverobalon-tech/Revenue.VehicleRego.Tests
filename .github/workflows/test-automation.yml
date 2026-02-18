@@ -76,8 +76,6 @@ jobs:
     
     - name: Install Playwright browsers
       run: playwright install chromium --with-deps
-      env:
-        PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
     
     - name: Run Tests
       run: |
@@ -88,8 +86,6 @@ jobs:
           --logger "console;verbosity=minimal"
       continue-on-error: true
       timeout-minutes: 10
-      env:
-        PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
     
     - name: List files for debugging
       if: always()
