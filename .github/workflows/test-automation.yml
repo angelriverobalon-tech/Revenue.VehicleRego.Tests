@@ -53,11 +53,9 @@ jobs:
           "PLAYWRIGHT_HEADLESS": "true",
           "PLAYWRIGHT_BROWSER": "chromium",
           "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
-        }' > env.json
-        
-        # Also create in the expected location for tests
-        mkdir -p bin/Release/net8.0
-        cp env.json bin/Release/net8.0/
+        }
+        EOF
+        cat bin/Release/net8.0/env.json
     
     - name: Verify URL is accessible
       run: |
@@ -65,9 +63,7 @@ jobs:
         RESPONSE=$(curl -sL -w "%{http_code}" "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty" -o /dev/null)
         echo "HTTP Response Code: $RESPONSE"
         if [ "$RESPONSE" -eq "200" ] || [ "$RESPONSE" -eq "301" ] || [ "$RESPONSE" -eq "302" ]; then
-          echo "✅ URL is accessible (HTTP $RESPONSE)"
-        else
-          echo "⚠️ Warning: URL returned HTTP $RESPONSE"
+          echo "✅ URL is accessible"
         fi
     
     - name: Restore dependencies
