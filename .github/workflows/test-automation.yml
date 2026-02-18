@@ -1,185 +1,180 @@
-name: Test Automation CI/CD
+    name: Test Automation CI/CD
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  workflow_dispatch:
+    on:
+      push:
+        branches: [main, develop]
+      pull_request:
+        branches: [main, develop]
+      workflow_dispatch:
 
-permissions:
-  contents: read
-  checks: write
-  pull-requests: write
-  actions: read
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      actions: read
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+    jobs:
+      test:
+        runs-on: ubuntu-latest
     
-    defaults:
-      run:
-        working-directory: ./Revenue.Tests.VehicleRego.BDD
+        defaults:
+          run:
+            working-directory: ./Revenue.Tests.VehicleRego.BDD
     
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
       
-    - name: Setup .NET 8
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+        - name: Setup .NET 8
+          uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: '8.0.x'
     
-    - name: Create env.json for CI
-      run: |
-        echo '{
-          "PLAYWRIGHT_URL": "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty",
-          "PLAYWRIGHT_HEADLESS": "true",
-          "PLAYWRIGHT_BROWSER": "chromium",
-          "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
-        }' > env.json
+        - name: Create env.json for CI
+          run: |
+            echo '{
+              "PLAYWRIGHT_URL": "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty",
+              "PLAYWRIGHT_HEADLESS": "true",
+              "PLAYWRIGHT_BROWSER": "chromium",
+              "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
+            }' > env.json
     
-    - name: Verify URL is accessible
-      run: |
-        echo "Testing URL accessibility..."
-        RESPONSE=$(curl -sL -w "%{http_code}" "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty" -o /dev/null)
-        echo "HTTP Response Code: $RESPONSE"
-        if [ "$RESPONSE" -eq "200" ] || [ "$RESPONSE" -eq "301" ] || [ "$RESPONSE" -eq "302" ]; then
-          echo "✅ URL is accessible (HTTP $RESPONSE)"
-        else
-          echo "⚠️ Warning: URL returned HTTP $RESPONSE"
-        fi
+        - name: Verify URL is accessible
+          run: |
+            echo "Testing URL accessibility..."
+            RESPONSE=$(curl -sL -w "%{http_code}" "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty" -o /dev/null)
+            echo "HTTP Response Code: $RESPONSE"
+            if [ "$RESPONSE" -eq "200" ] || [ "$RESPONSE" -eq "301" ] || [ "$RESPONSE" -eq "302" ]; then
+              echo "✅ URL is accessible (HTTP $RESPONSE)"
+            else
+              echo "⚠️ Warning: URL returned HTTP $RESPONSE"
+            fi
     
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: ${{ runner.os }}-nuget-
+        - name: Cache NuGet packages
+          uses: actions/cache@v4
+          with:
+            path: ~/.nuget/packages
+            key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+            restore-keys: ${{ runner.os }}-nuget-
     
-    - name: Cache Playwright browsers
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/ms-playwright
-        key: playwright-chromium-1.58.0
-        restore-keys: playwright-chromium-
+        - name: Cache Playwright browsers
+          uses: actions/cache@v4
+          with:
+            path: ~/.cache/ms-playwright
+            key: playwright-chromium-1.58.0
+            restore-keys: playwright-chromium-
     
-    - name: Restore dependencies
-      run: dotnet restore
+        - name: Restore dependencies
+          run: dotnet restore
       
-    - name: Build project
-      run: dotnet build --no-restore --configuration Release
+        - name: Build project
+          run: dotnet build --no-restore --configuration Release
     
-    - name: Install Playwright browsers
-      run: |
-        dotnet tool install --global Microsoft.Playwright.CLI
-        playwright install chromium
-      env:
-        PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
+        - name: Install Playwright browsers
+          run: |
+            dotnet tool install --global Microsoft.Playwright.CLI
+            playwright install chromium
+          env:
+            PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
     
-    - name: Run Tests (Parallel)
-      run: |
-        dotnet test \
-          --no-build \
-          --configuration Release \
-          --logger trx \
-          --logger "console;verbosity=minimal" \
-          --settings .runsettings
-      continue-on-error: true
-      timeout-minutes: 5
-      env:
-        # Set longer timeouts for CI environment
-        PWDEBUG: 0
-        PLAYWRIGHT_TIMEOUT: 90000
+        - name: Run Tests (Parallel)
+          run: |
+            dotnet test \
+              --no-build \
+              --configuration Release \
+              --logger trx \
+              --logger "console;verbosity=minimal" \
+              --settings .runsettings
+          continue-on-error: true
+          timeout-minutes: 5
+          env:
+            # Set longer timeouts for CI environment
+            PWDEBUG: 0
+            PLAYWRIGHT_TIMEOUT: 90000
     
-    - name: List files for debugging
-      if: always()
-      run: |
-        echo "=== Current Directory ==="
-        pwd
-        echo ""
-        echo "=== Directory Contents ==="
-        ls -la
-        echo ""
-        echo "=== Looking for screenshots ==="
-        find . -name "*.png" -type f || echo "No PNG files found"
-        echo ""
-        echo "=== Looking for debug screenshots ==="
-        find . -name "debug_*.png" -type f || echo "No debug screenshots found"
-        echo ""
-        echo "=== Looking for test results ==="
-        find . -name "*.trx" -type f || echo "No TRX files found"
+        - name: List files for debugging
+          if: always()
+          run: |
+            echo "=== Current Directory ==="
+            pwd
+            echo ""
+            echo "=== Directory Contents ==="
+            ls -la
+            echo ""
+            echo "=== Looking for screenshots ==="
+            find . -name "*.png" -type f || echo "No PNG files found"
+            echo ""
+            echo "=== Looking for debug screenshots ==="
+            find . -name "debug_*.png" -type f || echo "No debug screenshots found"
+            echo ""
+            echo "=== Looking for test results ==="
+            find . -name "*.trx" -type f || echo "No TRX files found"
     
-    - name: Upload Screenshots
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-screenshots
-        path: |
-          Revenue.Tests.VehicleRego.BDD/screenshots/**/*.png
-          Revenue.Tests.VehicleRego.BDD/**/screenshots/**/*.png
-          **/screenshots/**/*.png
-        retention-days: 30
-        if-no-files-found: warn
+        - name: Upload Screenshots
+          uses: actions/upload-artifact@v4
+          if: always()
+          with:
+            name: test-screenshots
+            path: |
+              Revenue.Tests.VehicleRego.BDD/screenshots/**/*.png
+              Revenue.Tests.VehicleRego.BDD/**/screenshots/**/*.png
+              **/screenshots/**/*.png
+            retention-days: 30
+            if-no-files-found: warn
     
-    - name: Upload Debug Screenshots
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: debug-screenshots
-        path: |
-          **/debug_*.png
-        retention-days: 7
-        if-no-files-found: ignore
+        - name: Upload Debug Screenshots
+          uses: actions/upload-artifact@v4
+          if: always()
+          with:
+            name: debug-screenshots
+            path: |
+              **/debug_*.png
+            retention-days: 7
+            if-no-files-found: ignore
 
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results
-        path: |
-          Revenue.Tests.VehicleRego.BDD/TestResults/**/*
-          Revenue.Tests.VehicleRego.BDD/**/TestResults/**/*
-        retention-days: 30
-        if-no-files-found: warn
+        - name: Upload Test Results
+          uses: actions/upload-artifact@v4
+          if: always()
+          with:
+            name: test-results
+            path: |
+              Revenue.Tests.VehicleRego.BDD/TestResults/**/*
+              Revenue.Tests.VehicleRego.BDD/**/TestResults/**/*
+            retention-days: 30
+            if-no-files-found: warn
     
-    - name: Create Test Summary with Screenshots
-      if: always()
-      shell: bash
-      run: |
-        echo "## 📊 Test Execution Report" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+        - name: Create Test Summary with Screenshots
+          if: always()
+          shell: bash
+          run: |
+            echo "## 📊 Test Execution Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
         
-        # Find and list screenshots
-        SCREENSHOT_COUNT=$(find . -name "FAILED_*.png" -type f | wc -l)
-        
-        if [ "$SCREENSHOT_COUNT" -gt 0 ]; then
-          echo "### 📸 Screenshots Captured: $SCREENSHOT_COUNT" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Screenshot | Path |" >> $GITHUB_STEP_SUMMARY
-          echo "|------------|------|" >> $GITHUB_STEP_SUMMARY
+            # Parse TRX files for test results
+            if [ -d "TestResults" ]; then
+              TRX_FILES=$(find TestResults -name "*.trx" -type f)
           
-          find . -name "FAILED_*.png" -type f | while read screenshot; do
-            filename=$(basename "$screenshot")
-            filepath=$(dirname "$screenshot")
-            echo "| 🖼️ \`$filename\` | \`$filepath\` |" >> $GITHUB_STEP_SUMMARY
-          done
+              find . -name "FAILED_*.png" -type f | while read screenshot; do
+                filename=$(basename "$screenshot")
+                filepath=$(dirname "$screenshot")
+                echo "| 🖼️ \`$filename\` | \`$filepath\` |" >> $GITHUB_STEP_SUMMARY
+              done
           
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📥 **Download 'test-screenshots' artifact to view images**" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "✅ **No test failures** - No screenshots captured" >> $GITHUB_STEP_SUMMARY
-        fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "📥 **Download 'test-screenshots' artifact to view images**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ **No test failures** - No screenshots captured" >> $GITHUB_STEP_SUMMARY
+            fi
         
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
         
-        # Test results summary
-        if [ -d "TestResults" ]; then
-          TRX_COUNT=$(find TestResults -name "*.trx" -type f | wc -l)
-          echo "### 📋 Test Results Files: $TRX_COUNT" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📥 **Download 'test-results' artifact to view detailed results**" >> $GITHUB_STEP_SUMMARY
-        fi
+            # Test results summary
+            if [ -d "TestResults" ]; then
+              TRX_COUNT=$(find TestResults -name "*.trx" -type f | wc -l)
+              echo "### 📋 Test Results Files: $TRX_COUNT" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "📥 **Download 'test-results' artifact to view detailed results**" >> $GITHUB_STEP_SUMMARY
+            fi
