@@ -74,8 +74,14 @@ jobs:
           echo "✅ URL is accessible"
         fi
     
-    - name: Install Playwright CLI
-      run: dotnet tool install --global Microsoft.Playwright.CLI
+    - name: Install Playwright browsers using build tools
+      run: |
+        echo "Installing Playwright browsers..."
+        pwsh bin/Release/net8.0/playwright.ps1 install chromium --with-deps
+        
+        echo "✅ Playwright browsers installed"
+        echo "Checking installation..."
+        ls -la ~/.cache/ms-playwright/ || echo "No cache directory"
     
     - name: Install Playwright browsers
       run: playwright install chromium --with-deps
