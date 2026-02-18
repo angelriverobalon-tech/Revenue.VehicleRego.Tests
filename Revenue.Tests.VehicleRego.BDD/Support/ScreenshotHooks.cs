@@ -53,8 +53,9 @@ namespace Revenue.Tests.VehicleRego.BDD.Support
 
             try
             {
-                // Create screenshots directory
-                var screenshotsDir = Path.Combine(Directory.GetCurrentDirectory(), "screenshots");
+                // Use TestContext.CurrentContext.WorkDirectory for CI compatibility
+                var baseDir = TestContext.CurrentContext.WorkDirectory ?? Directory.GetCurrentDirectory();
+                var screenshotsDir = Path.Combine(baseDir, "screenshots");
                 Directory.CreateDirectory(screenshotsDir);
 
                 // Generate filename
@@ -73,11 +74,14 @@ namespace Revenue.Tests.VehicleRego.BDD.Support
                 // Attach to NUnit test context
                 TestContext.AddTestAttachment(screenshotPath, $"Failed: {scenarioTitle}");
 
-                Console.WriteLine($"📸 Screenshot captured: {screenshotPath}");
+                // Print absolute path for debugging
+                Console.WriteLine($"📸 Screenshot captured: {Path.GetFullPath(screenshotPath)}");
+                Console.WriteLine($"📁 Screenshot directory: {Path.GetFullPath(screenshotsDir)}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Failed to capture screenshot: {ex.Message}");
+                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
             }
         }
 

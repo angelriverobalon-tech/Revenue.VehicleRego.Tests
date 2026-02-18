@@ -159,8 +159,18 @@ namespace Revenue.Tests.VehicleRego.BDD.Model.Pages
         public async Task<string> GetPassengerVehicleText()
         {
             if (page == null) throw new InvalidOperationException("Page is not initialized");
-            var passengerVehicleTextValue = await page.Locator(passengerVehicleText).InnerTextAsync();
-            return passengerVehicleTextValue?.Trim() ?? string.Empty;
+
+            // Use TextContentAsync() which properly extracts text without HTML tags
+            var element = page.Locator(passengerVehicleText);
+            var text = await element.TextContentAsync();
+
+            // Clean up the text - remove any HTML entities and extra whitespace
+            var cleaned = text?.Trim() ?? string.Empty;
+
+            // Remove any HTML tags if they leaked through
+            cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"<[^>]+>", "");
+
+            return cleaned;
         }
 
         public async Task<bool> IsPurchasePriceOrValueTextLabelDisplayed()

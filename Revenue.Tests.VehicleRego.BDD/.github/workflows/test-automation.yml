@@ -2,17 +2,24 @@ name: Test Automation CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
-  schedule:
-    # Run tests every day at 9 AM UTC
-    - cron: '0 9 * * *'
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./Revenue.Tests.VehicleRego.BDD
     
     steps:
     - name: Checkout code
@@ -23,49 +30,105 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     
+    - name: Create env.json for CI
+      run: |
+        echo '{
+          "PLAYWRIGHT_URL": "https://www.service.nsw.gov.au/transaction/check-motor-vehicle-stamp-duty",
+          "PLAYWRIGHT_HEADLESS": "true",
+          "PLAYWRIGHT_BROWSER": "chromium",
+          "API_BASE_URL": "https://openlibrary.org/authors/OL1A.json"
+        }' > env.json
+    
     - name: Restore dependencies
       run: dotnet restore
       
     - name: Build project
       run: dotnet build --no-restore --configuration Release
     
-    - name: Install Playwright
-      run: pwsh Scripts/install-playwright.ps1
-      
     - name: Install Playwright browsers
-      run: pwsh -c "dotnet tool install --global Microsoft.Playwright.CLI; playwright install --with-deps"
+      run: |
+        dotnet tool install --global Microsoft.Playwright.CLI
+        playwright install --with-deps chromium
     
     - name: Run Tests
-      run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx" --logger "html;LogFileName=test-results.html" --verbosity normal
+      run: dotnet test --no-build --configuration Release --logger trx --verbosity normal
       continue-on-error: true
     
-    - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+    - name: List files for debugging
+      if: always()
+      run: |
+        echo "=== Current Directory ==="
+        pwd
+        echo ""
+        echo "=== Directory Contents ==="
+        ls -la
+        echo ""
+        echo "=== Looking for screenshots ==="
+        find . -name "*.png" -type f || echo "No PNG files found"
+        echo ""
+        echo "=== Looking for test results ==="
+        find . -name "*.trx" -type f || echo "No TRX files found"
+    
+    - name: Upload Screenshots
+      uses: actions/upload-artifact@v4
       if: always()
       with:
-        files: '**/TestResults/*.trx'
-        check_name: 'Test Results'
-        comment_title: 'Test Results'
-        
+        name: test-screenshots
+        path: |
+          Revenue.Tests.VehicleRego.BDD/screenshots/**/*.png
+          Revenue.Tests.VehicleRego.BDD/**/screenshots/**/*.png
+          **/screenshots/**/*.png
+        retention-days: 30
+        if-no-files-found: warn
+    
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results
         path: |
-          **/TestResults/
-          **/*.trx
-          **/*.html
+          Revenue.Tests.VehicleRego.BDD/TestResults/**/*
+          Revenue.Tests.VehicleRego.BDD/**/TestResults/**/*
         retention-days: 30
-        
-    - name: Upload Playwright Screenshots/Videos
-      uses: actions/upload-artifact@v4
+        if-no-files-found: warn
+    
+    - name: Create Test Summary with Screenshots
       if: always()
-      with:
-        name: playwright-artifacts
-        path: |
-          **/screenshots/
-          **/videos/
-          **/traces/
-        retention-days: 30
-        if-no-files-found: ignore
+      shell: bash
+      run: |
+        echo "## 📊 Test Execution Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Find and list screenshots
+        SCREENSHOT_COUNT=$(find . -name "FAILED_*.png" -type f | wc -l)
+        
+        if [ "$SCREENSHOT_COUNT" -gt 0 ]; then
+          echo "### 📸 Screenshots Captured: $SCREENSHOT_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Screenshot | Path |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|------|" >> $GITHUB_STEP_SUMMARY
+          
+          find . -name "FAILED_*.png" -type f | while read screenshot; do
+            filename=$(basename "$screenshot")
+            filepath=$(dirname "$screenshot")
+            echo "| 🖼️ \`$filename\` | \`$filepath\` |" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 **Download 'test-screenshots' artifact to view images**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ **No test failures** - No screenshots captured" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        
+        # Test results summary
+        if [ -d "TestResults" ]; then
+          TRX_COUNT=$(find TestResults -name "*.trx" -type f | wc -l)
+          echo "### 📋 Test Results Files: $TRX_COUNT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 **Download 'test-results' artifact to view detailed results**" >> $GITHUB_STEP_SUMMARY
+        fi
