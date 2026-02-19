@@ -172,41 +172,43 @@ jobs:
           echo "|--------|-----------|------|----------|" >> $GITHUB_STEP_SUMMARY
           
           for trx in $TRX_FILES; do
-            # Parse test results
-            grep -oP '<UnitTestResult.*?/>' "$trx" | while read -r line; do
-              TESTNAME=$(echo "$line" | grep -oP 'testName="\K[^"]+' || echo "Unknown")
-              OUTCOME=$(echo "$line" | grep -oP 'outcome="\K[^"]+' || echo "Unknown")
-              DURATION=$(echo "$line" | grep -oP 'duration="\K[^"]+' | sed 's/0://' || echo "N/A")
-              TESTID=$(echo "$line" | grep -oP 'testId="\K[^"]+' || echo "")
-              
-              if [ "$OUTCOME" = "Passed" ]; then
-                STATUS="✅"
-              elif [ "$OUTCOME" = "Failed" ]; then
-                STATUS="❌"
-              else
-                STATUS="⏭️"
-              fi
-              
-              # Clean test name
-              CLEAN_NAME=$(echo "$TESTNAME" | sed 's/.*\.//')
-              CLEAN_NAME=$(echo "$CLEAN_NAME" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g')
-              
-              # Extract tags from UnitTest definition
-              TAGS=""
-              if [ -n "$TESTID" ]; then
-                # Find the UnitTest element with this ID and extract TestCategory traits
-                TEST_DEF=$(grep -A 20 "id=\"$TESTID\"" "$trx" | grep -oP '<TestCategory>\K[^<]+' | tr '\n' ', ' | sed 's/,$//')
-                if [ -n "$TEST_DEF" ]; then
-                  # Format tags with @ prefix
-                  TAGS=$(echo "$TEST_DEF" | sed 's/,/, @/g' | sed 's/^/@/')
+            # Parse test results using while loop to handle multi-line XML
+            while IFS= read -r line; do
+              if [[ $line == *'<UnitTestResult'* ]]; then
+                TESTNAME=$(echo "$line" | grep -oP 'testName="\K[^"]+' || echo "Unknown")
+                OUTCOME=$(echo "$line" | grep -oP 'outcome="\K[^"]+' || echo "Unknown")
+                DURATION=$(echo "$line" | grep -oP 'duration="\K[^"]+' | sed 's/0://' || echo "N/A")
+                TESTID=$(echo "$line" | grep -oP 'testId="\K[^"]+' || echo "")
+                
+                if [ "$OUTCOME" = "Passed" ]; then
+                  STATUS="✅"
+                elif [ "$OUTCOME" = "Failed" ]; then
+                  STATUS="❌"
+                else
+                  STATUS="⏭️"
                 fi
+                
+                # Clean test name
+                CLEAN_NAME=$(echo "$TESTNAME" | sed 's/.*\.//')
+                CLEAN_NAME=$(echo "$CLEAN_NAME" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' | sed 's/&lt;/</g' | sed 's/&gt;/>/g')
+                
+                # Extract tags from UnitTest definition
+                TAGS=""
+                if [ -n "$TESTID" ]; then
+                  # Find TestCategory traits for this test ID
+                  TEST_DEF=$(grep -B 5 "id=\"$TESTID\"" "$trx" | grep -oP '<TestCategoryItem>TestCategory=\K[^<]+' | tr '\n' ', ' | sed 's/,$//')
+                  if [ -n "$TEST_DEF" ]; then
+                    # Format tags with @ prefix
+                    TAGS=$(echo "$TEST_DEF" | sed 's/,/, @/g' | sed 's/^/@/')
+                  fi
+                fi
+                
+                # Default to empty if no tags found
+                TAGS=${TAGS:-"-"}
+                
+                echo "| $STATUS | $CLEAN_NAME | $TAGS | $DURATION |" >> $GITHUB_STEP_SUMMARY
               fi
-              
-              # Default to empty if no tags found
-              TAGS=${TAGS:-"-"}
-              
-              echo "| $STATUS | $CLEAN_NAME | $TAGS | $DURATION |" >> $GITHUB_STEP_SUMMARY
-            done
+            done < "$trx"
           done
           
           echo "" >> $GITHUB_STEP_SUMMARY
