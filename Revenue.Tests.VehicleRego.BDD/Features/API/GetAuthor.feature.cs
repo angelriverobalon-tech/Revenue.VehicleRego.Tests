@@ -11,7 +11,7 @@
 #region Designer generated code
 #pragma warning disable
 using Reqnroll;
-namespace Revenue.Tests.BDD.Features
+namespace Revenue.Tests.BDD.Features.API
 {
     
     
@@ -27,7 +27,7 @@ namespace Revenue.Tests.BDD.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "Get Author Details", "As a user, I want to retrieve the Author\'s Details so that I can view the Author\'" +
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features/API", "Get Author Details", "As a user, I want to retrieve the Author\'s Details so that I can view the Author\'" +
                 "s information.", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "GetAuthor.feature"
@@ -106,7 +106,7 @@ namespace Revenue.Tests.BDD.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/GetAuthor.feature.ndjson", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/API/GetAuthor.feature.ndjson", 3);
         }
         
         [global::NUnit.Framework.TestAttribute()]

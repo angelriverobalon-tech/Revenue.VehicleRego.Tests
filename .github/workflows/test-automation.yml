@@ -18,6 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     
+    # ADD THIS SECTION HERE ⬇️
+    strategy:
+      fail-fast: false  # Continue running other tests if one fails
+      matrix:
+        test-suite: [API, GUI]
+    
     defaults:
       run:
         working-directory: ./Revenue.Tests.VehicleRego.BDD
@@ -86,6 +92,24 @@ jobs:
           --logger "console;verbosity=minimal"
       continue-on-error: true
       timeout-minutes: 10
+      
+    - name: Generate Living Documentation
+      if: always()
+      run: |
+        dotnet tool install --global Reqnroll.Tools.LivingDoc
+        livingdoc test-assembly \
+          bin/Release/net8.0/Revenue.Tests.VehicleRego.BDD.dll \
+          -t TestResults/test-results.trx \
+          -o TestResults/livingdoc.html
+      
+    - name: Upload Living Doc
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: living-documentation
+        path: '**/TestResults/livingdoc.html'
+        retention-days: 30
+        if-no-files-found: warn
     
     - name: List files for debugging
       if: always()

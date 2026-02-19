@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using Reqnroll;
 
-namespace Revenue.Tests.VehicleRego.BDD.StepDefinitions
+namespace Revenue.Tests.BDD.StepDefinitions.UI
 {
     [Binding]
     public sealed class MotorVehicleRegoStepDefinitions

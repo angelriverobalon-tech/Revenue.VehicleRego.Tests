@@ -37,4 +37,8 @@
 	  <ReqnrollLegacyCodeBehindFiles Remove=".github\**" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Include=".github\workflows\test-automation.yml" />
+	</ItemGroup>
+
 </Project>

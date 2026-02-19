@@ -6,7 +6,7 @@ using Revenue.Tests.BDD.Model.Api;
 using Revenue.Tests.BDD.Model.Api;
 using System.Linq;
 
-namespace Revenue.Tests.VehicleRego.BDD.StepDefinitions
+namespace Revenue.Tests.BDD.StepDefinitions.API
 {
     [Binding]
     public sealed class GetAuthorStepDefinitions

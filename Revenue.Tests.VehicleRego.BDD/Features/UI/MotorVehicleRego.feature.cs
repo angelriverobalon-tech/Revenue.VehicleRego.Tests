@@ -11,7 +11,7 @@
 #region Designer generated code
 #pragma warning disable
 using Reqnroll;
-namespace Revenue.Tests.BDD.Features
+namespace Revenue.Tests.BDD.Features.UI
 {
     
     
@@ -27,7 +27,7 @@ namespace Revenue.Tests.BDD.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features", "Motor Vehicle Registration", "As a user\r\nI want to navigate to the Motor Vehicle Registration page\r\nSo that I c" +
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en"), "Features/UI", "Motor Vehicle Registration", "As a user\r\nI want to navigate to the Motor Vehicle Registration page\r\nSo that I c" +
                 "an see the calculated amount for my vehicle registration", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "MotorVehicleRego.feature"
@@ -106,7 +106,7 @@ namespace Revenue.Tests.BDD.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/MotorVehicleRego.feature.ndjson", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/UI/MotorVehicleRego.feature.ndjson", 3);
         }
         
         [global::NUnit.Framework.TestAttribute()]

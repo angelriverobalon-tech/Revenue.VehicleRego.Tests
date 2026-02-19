@@ -11,5 +11,9 @@
     "minTracedDuration": "0:0:0.1"
   },
   "stepAssemblies": [],
-  "plugins": []
+  "plugins": [],
+  "generator": {
+    "allowDebugGeneratedFiles": false,
+    "allowRowTests": true
+  }
 }
