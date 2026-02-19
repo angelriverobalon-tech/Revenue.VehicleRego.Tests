@@ -186,9 +186,13 @@ jobs:
                   STATUS="⏭️"
                 fi
                 
-                # Clean test name: remove namespace and decode HTML entities
-                CLEAN_NAME=$(echo "$TESTNAME" | sed 's/.*\.//')
-                CLEAN_NAME=$(echo "$CLEAN_NAME" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' | sed 's/&lt;/</g' | sed 's/&gt;/>/g')
+                # Clean test name: remove namespace (everything before the last dot that's not in parentheses)
+                # First decode HTML entities, then clean namespace
+                CLEAN_NAME=$(echo "$TESTNAME" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' | sed 's/&lt;/</g' | sed 's/&gt;/>/g')
+                
+                # Remove namespace: match pattern like "Namespace.FeatureName.ScenarioName" -> "ScenarioName"
+                # This pattern removes everything up to the last dot before any opening parenthesis or end of string
+                CLEAN_NAME=$(echo "$CLEAN_NAME" | sed -E 's/^.*\.([^.(]+(\([^)]*\))?)$/\1/')
                 
                 echo "| $STATUS | $CLEAN_NAME | $DURATION |" >> $GITHUB_STEP_SUMMARY
               fi
