@@ -186,13 +186,23 @@ jobs:
                   STATUS="⏭️"
                 fi
                 
-                # Clean test name: remove namespace (everything before the last dot that's not in parentheses)
-                # First decode HTML entities, then clean namespace
+                # First decode HTML entities
                 CLEAN_NAME=$(echo "$TESTNAME" | sed 's/&quot;/"/g' | sed 's/&amp;/\&/g' | sed 's/&lt;/</g' | sed 's/&gt;/>/g')
                 
-                # Remove namespace: match pattern like "Namespace.FeatureName.ScenarioName" -> "ScenarioName"
-                # This pattern removes everything up to the last dot before any opening parenthesis or end of string
-                CLEAN_NAME=$(echo "$CLEAN_NAME" | sed -E 's/^.*\.([^.(]+(\([^)]*\))?)$/\1/')
+                # Remove namespace: extract method name and parameters
+                # This handles dots in parameters correctly by splitting only the part before '('
+                CLEAN_NAME=$(echo "$CLEAN_NAME" | awk '{
+                  paren_pos = index($0, "(")
+                  if (paren_pos > 0) {
+                    before_paren = substr($0, 1, paren_pos-1)
+                    after_paren = substr($0, paren_pos)
+                    n = split(before_paren, parts, ".")
+                    print parts[n] after_paren
+                  } else {
+                    n = split($0, parts, ".")
+                    print parts[n]
+                  }
+                }')
                 
                 echo "| $STATUS | $CLEAN_NAME | $DURATION |" >> $GITHUB_STEP_SUMMARY
               fi
