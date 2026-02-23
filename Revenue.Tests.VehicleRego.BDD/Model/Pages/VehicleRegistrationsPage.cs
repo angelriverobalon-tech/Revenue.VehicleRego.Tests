@@ -65,7 +65,7 @@ namespace Revenue.Tests.VehicleRego.BDD.Model.Pages
                 throw new InvalidOperationException("Page is not initialized");
 
             // Simple, fast click
-            await page.Locator("//a[normalize-space()='Check online']").ClickAsync(new()
+            await page.Locator(checkOnlineButton).ClickAsync(new()
             {
                 Timeout = 10000  // 10 seconds max
             });
