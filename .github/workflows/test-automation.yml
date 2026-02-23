@@ -87,39 +87,42 @@ jobs:
         dotnet test \
           --no-build \
           --configuration Release \
-          --results-directory ./TestResults \
-          --logger "trx;LogFileName=test-results.trx" \
+          --filter "TestCategory=${{ matrix.test-suite }}" \
+          --results-directory ./TestResults/${{ matrix.test-suite }} \
+          --logger "trx;LogFileName=test-results-${{ matrix.test-suite }}.trx" \
           --logger "console;verbosity=minimal"
       continue-on-error: true
-      timeout-minutes: 10    
-    
+      timeout-minutes: 10
+
     - name: List files for debugging
       if: always()
       run: |
         echo "=== Current Directory ==="
         pwd
         echo ""
+        echo "=== Test Suite: ${{ matrix.test-suite }} ==="
+        echo ""
         echo "=== Looking for screenshots ==="
         find . -name "*.png" -type f || echo "No PNG files found"
         echo ""
         echo "=== Looking for test results ==="
         find . -name "*.trx" -type f || echo "No TRX files found"
-    
+
     - name: Upload Screenshots
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-screenshots
+        name: test-screenshots-${{ matrix.test-suite }}
         path: '**/screenshots/**/*.png'
         retention-days: 30
         if-no-files-found: ignore
-    
+
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results
-        path: '**/TestResults/**/*.trx'
+        name: test-results-${{ matrix.test-suite }}
+        path: '**/TestResults/${{ matrix.test-suite }}/**/*.trx'
         retention-days: 30
         if-no-files-found: warn
     
@@ -127,16 +130,17 @@ jobs:
       if: always()
       shell: bash
       run: |
-        echo "## 📊 Test Execution Report" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 Test Execution Report - ${{ matrix.test-suite }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Suite:** ${{ matrix.test-suite }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        # Find TRX files anywhere in the workspace
-        TRX_FILES=$(find . -name "*.trx" -type f 2>/dev/null)
+        # Find TRX files for this specific test suite
+        TRX_FILES=$(find ./TestResults/${{ matrix.test-suite }} -name "*.trx" -type f 2>/dev/null)
         
         if [ -z "$TRX_FILES" ]; then
-          echo "⚠️ **No test results found**" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **No test results found for ${{ matrix.test-suite }}**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Tests may not have executed. Check the 'Run Tests' step logs." >> $GITHUB_STEP_SUMMARY
         else
