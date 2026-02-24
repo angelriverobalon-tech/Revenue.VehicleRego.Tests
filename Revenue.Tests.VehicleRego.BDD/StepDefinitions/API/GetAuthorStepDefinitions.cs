@@ -83,11 +83,11 @@ namespace Revenue.Tests.BDD.StepDefinitions.API
                 throw new Exception("Failed to deserialize response to AuthorDto");
 
             // support only the fields we care about for now
-            if (string.Equals(propertyName, "personal_name", StringComparison.OrdinalIgnoreCase))
-            {
-                _author.PersonalName.Should().Be(expectedValue);
-                return;
-            }
+            //if (string.Equals(propertyName, "personal_name", StringComparison.OrdinalIgnoreCase))
+            //{
+            //    _author.PersonalName.Should().Be(expectedValue);
+            //    return;
+            //}
 
             // fallback: reflectively check for string property
             var prop = typeof(AuthorDto).GetProperties()
